@@ -1,0 +1,79 @@
+from flask import Blueprint, render_template, request
+
+from app.database import (
+    DatabaseConfigurationError,
+    DatabaseSaveError,
+    save_analysis,
+)
+from app.services.gemini_analyzer import (
+    GeminiAnalysisError,
+    GeminiConfigurationError,
+    analyze_resume,
+)
+from app.services.pdf_extractor import PdfExtractionError, extract_resume_text
+
+main = Blueprint("main", __name__)
+
+
+def calculate_match_score(requirements: list[dict]) -> int | None:
+    if not requirements:
+        return None
+
+    matched = sum(item["status"] == "matched" for item in requirements)
+    return round(matched / len(requirements) * 100)
+
+
+@main.route("/", methods=["GET", "POST"])
+def home():
+    if request.method == "GET":
+        return render_template("index.html")
+
+    resume_file = request.files.get("resume_pdf")
+    job_description = request.form.get("job_description", "").strip()
+    consent = request.form.get("gemini_data_consent")
+
+    if not resume_file or not resume_file.filename:
+        return render_template("index.html", error="Choose a resume PDF.")
+    if not resume_file.filename.lower().endswith(".pdf"):
+        return render_template("index.html", error="Upload a file with a .pdf extension.")
+    if not job_description:
+        return render_template("index.html", error="Enter the job description.")
+    if consent != "yes":
+        return render_template(
+            "index.html",
+            error="Confirm the Gemini data-use notice before starting the analysis.",
+        )
+
+    try:
+        resume_text = extract_resume_text(resume_file.read())
+    except PdfExtractionError as exc:
+        return render_template("index.html", error=str(exc))
+
+    try:
+        insights = analyze_resume(resume_text, job_description)
+    except GeminiConfigurationError as exc:
+        return render_template("index.html", error=str(exc))
+    except GeminiAnalysisError as exc:
+        return render_template("index.html", error=str(exc))
+
+    result = insights.model_dump(mode="json")
+    result["job_match_score"] = calculate_match_score(result["requirements"])
+
+    try:
+        record_id = save_analysis(resume_text, result)
+    except DatabaseConfigurationError as exc:
+        return render_template(
+            "index.html",
+            error=f"{exc} Gemini returned an analysis, but it was not saved.",
+        )
+    except DatabaseSaveError as exc:
+        return render_template(
+            "index.html",
+            error=f"{exc} Gemini returned an analysis, but it was not saved.",
+        )
+
+    return render_template(
+        "results.html",
+        result=result,
+        record_id=record_id,
+    )
