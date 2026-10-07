@@ -6,3 +6,4 @@ pydantic
 SQLAlchemy
 PyMySQL
 pytest
+gunicorn
