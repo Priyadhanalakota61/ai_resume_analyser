@@ -21,6 +21,11 @@ def _create_engine():
         raise DatabaseConfigurationError(
             "DATABASE_URL is not configured. Add your MySQL connection string to .env."
         )
+
+    # Railway provides MYSQL_URL with the generic mysql:// scheme. Select the
+    # PyMySQL driver explicitly, which is already included in requirements.txt.
+    if database_url.startswith("mysql://"):
+        database_url = database_url.replace("mysql://", "mysql+pymysql://", 1)
     if not database_url.startswith("mysql"):
         raise DatabaseConfigurationError("DATABASE_URL must point to a MySQL database.")
 
