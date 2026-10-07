@@ -15,7 +15,7 @@ def create_app() -> Flask:
     def upload_too_large(_error):
         return render_template(
             "index.html",
-            error="The upload request is too large. Use a PDF smaller than 5 MiB.",
+            error="The upload request is too large. Keep the combined PDF and form data below 5 MiB.",
         ), 413
 
     return app
