@@ -35,12 +35,12 @@
         <textarea id="job_description" name="job_description" required></textarea>
 
         <div class="notice">
-          <strong>Gemini data-use notice:</strong> This app sends the extracted resume text and job description to Google Gemini for analysis. On the Gemini API free tier, prompts and responses may be used to improve Google products. Use a synthetic or anonymized resume unless you have reviewed this and want to proceed with personal resume data.
+          <strong>Gemini free-tier data-use notice:</strong> The extracted resume text and job description are sent to Google Gemini for analysis. Google says not to submit sensitive, confidential, or personal information to unpaid Gemini API services; free-tier prompts and responses may also be used to improve Google products and may be reviewed by people. Use only a synthetic or anonymized resume. Remove direct identifiers such as names, phone numbers, email addresses, home addresses, and profile links before uploading. Read <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Google's Gemini API terms</a>.
         </div>
 
         <label class="consent">
           <input type="checkbox" name="gemini_data_consent" value="yes" required>
-          <span>I understand and consent to sending this resume text and job description to Google Gemini under the data-use notice above.</span>
+          <span>I confirm this resume is synthetic or anonymized and contains no sensitive, confidential, or personal information. I understand that the extracted text and job description are sent to Google Gemini's free-tier API.</span>
         </label>
 
         <button type="submit">Analyze resume</button>
