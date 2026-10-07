@@ -24,8 +24,8 @@ Treat the repository and explicit user decisions as requirements. Do not invent 
 - Never ask the user to paste a secret into chat. Explain how to add credentials locally.
 - Use synthetic or anonymized resumes for development and demos.
 - The user may have a Gemini free-tier API key; key presence and quota are not confirmed.
+- Google’s Gemini API terms for unpaid services say not to submit sensitive, confidential, or personal information. The free-tier app must require confirmation that resume text is synthetic/anonymized before calling Gemini; consent does not override the terms. Include a link to the terms in the UI.
 - The user authorized storing extracted resume text and generated analysis results in MySQL. Do not store the original uploaded PDF unless the user explicitly decides to.
-- Before any real resume text is sent to Gemini, the application must disclose the applicable Gemini free-tier data handling and require an explicit user confirmation in the product flow. Do not transmit the resume to Gemini without that confirmation.
 - No retention period or deletion workflow has been specified. Do not claim a retention period or implement automatic deletion without asking.
 
 ## Build and verification method
