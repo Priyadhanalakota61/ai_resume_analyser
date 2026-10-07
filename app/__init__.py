@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dotenv import load_dotenv
 from flask import Flask, render_template
 
@@ -5,7 +7,10 @@ load_dotenv()
 
 
 def create_app() -> Flask:
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=str(Path(__file__).resolve().parent.parent / "templates"),
+    )
     app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
     from app.routes import main
