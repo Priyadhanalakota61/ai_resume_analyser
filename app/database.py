@@ -1,7 +1,7 @@
 import os
 
 from sqlalchemy import create_engine
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import ArgumentError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models import AnalysisRecord, Base
@@ -24,7 +24,10 @@ def _create_engine():
     if not database_url.startswith("mysql"):
         raise DatabaseConfigurationError("DATABASE_URL must point to a MySQL database.")
 
-    return create_engine(database_url, pool_pre_ping=True)
+    try:
+        return create_engine(database_url, pool_pre_ping=True)
+    except ArgumentError as exc:
+        raise DatabaseConfigurationError("DATABASE_URL is not a valid SQLAlchemy MySQL URL.") from exc
 
 
 def ensure_database_ready() -> None:
