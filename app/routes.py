@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request
 from app.database import (
     DatabaseConfigurationError,
     DatabaseSaveError,
+    ensure_database_ready,
     save_analysis,
 )
 from app.services.gemini_analyzer import (
@@ -41,13 +42,21 @@ def home():
     if consent != "yes":
         return render_template(
             "index.html",
-            error="Confirm the Gemini data-use notice before starting the analysis.",
+            error="Confirm that the resume is synthetic or anonymized before analysis.",
         )
 
     try:
         resume_text = extract_resume_text(resume_file.read())
     except PdfExtractionError as exc:
         return render_template("index.html", error=str(exc))
+
+    try:
+        ensure_database_ready()
+    except (DatabaseConfigurationError, DatabaseSaveError) as exc:
+        return render_template(
+            "index.html",
+            error=f"{exc} No text was sent to Gemini.",
+        )
 
     try:
         insights = analyze_resume(resume_text, job_description)
@@ -61,12 +70,7 @@ def home():
 
     try:
         record_id = save_analysis(resume_text, result)
-    except DatabaseConfigurationError as exc:
-        return render_template(
-            "index.html",
-            error=f"{exc} Gemini returned an analysis, but it was not saved.",
-        )
-    except DatabaseSaveError as exc:
+    except (DatabaseConfigurationError, DatabaseSaveError) as exc:
         return render_template(
             "index.html",
             error=f"{exc} Gemini returned an analysis, but it was not saved.",
