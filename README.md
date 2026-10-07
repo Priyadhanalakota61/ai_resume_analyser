@@ -10,7 +10,7 @@ Resume Analyzer takes a resume PDF and a job description, then provides an ATS-s
 - Shows a job-match estimate, requirement evidence, skill feedback, suggestions, and interview questions.
 - Saves extracted resume text and generated results to MySQL. The uploaded PDF and job description are not stored.
 - MySQL creates the `analysis_records` table automatically when the selected database exists and is reachable.
-- Uploads are limited to 5 MiB.
+- The request limit is 5 MiB.
 
 ## ATS-style job-match estimate
 
@@ -26,7 +26,7 @@ Google's terms for unpaid Gemini API services say not to submit sensitive, confi
 
 ## Run locally on Windows
 
-Create and activate a virtual environment, then install dependencies:
+Use Python 3.10 or newer. Create and activate a virtual environment, then install dependencies:
 
 ```powershell
 py -m venv .venv
@@ -56,6 +56,12 @@ python run.py
 ```
 
 Open http://127.0.0.1:5000. The `/health` route returns a small application health response.
+
+## Run tests
+
+```powershell
+python -m pytest
+```
 
 ## Stored data
 
