@@ -67,16 +67,15 @@ RESUME TEXT:
 
     try:
         client = genai.Client(api_key=api_key)
-        interaction = client.interactions.create(
+        response = client.models.generate_content(
             model=model,
-            input=prompt,
-            response_format={
-                "type": "text",
-                "mime_type": "application/json",
-                "schema": AnalysisInsights.model_json_schema(),
+            contents=prompt,
+            config={
+                "response_mime_type": "application/json",
+                "response_schema": AnalysisInsights,
             },
         )
-        output_text = getattr(interaction, "output_text", None)
+        output_text = getattr(response, "text", None)
         if not output_text:
             raise GeminiAnalysisError("Gemini returned an empty analysis.")
         return AnalysisInsights.model_validate_json(output_text)
