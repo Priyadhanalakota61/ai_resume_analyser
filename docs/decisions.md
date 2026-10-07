@@ -19,7 +19,7 @@ The user asked us to use corporate HR practice as a reference. ATS products vary
 
 1. Extract the explicit job requirements from the job description.
 2. Compare each requirement to evidence in the extracted resume text.
-3. Mark each requirement as either `matched` or `not found`; do not infer that an unsupported qualification is present.
+3. Mark each requirement as either `matched` or `not_found`; do not infer that an unsupported qualification is present.
 4. Calculate `matched requirements / total extracted requirements * 100`, with every requirement counted equally.
 5. Show the requirement list and resume evidence so the user can understand the estimate.
 
@@ -33,6 +33,8 @@ This is the project's defined matching method, not an official ATS score, a univ
 - Gemini key availability and active quota for the selected model.
 - Deployment target and any requirements beyond local development.
 
-## Privacy implementation requirement
+## Gemini free-tier restriction
 
-The Gemini free tier may use prompts and responses to improve Google products. Before sending personal resume text to Gemini, the product must explain the applicable data handling and obtain the user's explicit confirmation. Use synthetic or anonymized resumes for development and demos.
+Google's terms for unpaid Gemini API services say not to submit sensitive, confidential, or personal information. Free-tier prompts and responses may be used to improve Google products, and human reviewers may process them. The app must therefore require the user to confirm that the uploaded resume is synthetic or anonymized before sending extracted text to Gemini. That confirmation does not make it acceptable to submit personal information.
+
+Official terms: https://ai.google.dev/gemini-api/terms
