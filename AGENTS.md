@@ -4,9 +4,9 @@
 
 Develop the Resume Analyzer on the `resume_analyzer` branch of this repository.
 
-The repository README defines the product as: accept a resume PDF and provide an ATS score, relevant interview questions, and suggestions based on skills. The user confirmed that each analysis will use a resume PDF plus a job description, and that MySQL should save both extracted resume text and generated results. The user also confirmed Flask, MySQL, and the Gemini API as the intended stack.
+The product accepts a resume PDF and job description, then provides an ATS-style job-match estimate, relevant interview questions, and skill-based suggestions. The user confirmed Flask, MySQL, and the Gemini API.
 
-Treat the repository and explicit user decisions as requirements. Do not invent additional product behavior, scoring criteria, data-retention rules, deployment targets, or credentials. If a necessary decision is not established, pause and ask. Keep confirmed decisions in `docs/decisions.md`; never record assumptions as facts.
+Treat the repository and explicit user decisions as requirements. Do not invent additional product behavior, data-retention rules, deployment targets, or credentials. If a necessary decision is not established, pause and ask. Keep confirmed decisions and clearly labeled project methods in `docs/decisions.md`; never describe a project method as an industry-wide standard.
 
 ## Branch and repository safety
 
@@ -34,10 +34,10 @@ Treat the repository and explicit user decisions as requirements. Do not invent 
 2. Implement only confirmed requirements. Ask before resolving material product decisions that are not specified.
 3. Use Flask, MySQL, and Gemini as the agreed stack. Keep provider calls in a small service module so integration details are isolated.
 4. Accept the confirmed inputs: PDF resume and job description. Validate the PDF and handle unreadable/empty text, unsupported files, missing API credentials, Gemini quota/errors, and database connection failures with clear messages.
-5. Generate only the confirmed outputs: ATS score, relevant interview questions, and skill-based suggestions. Do not add extra user-facing analysis features unless requested.
-6. Do not fabricate model output when Gemini fails. Clearly distinguish unavailable analysis from successful analysis.
-7. Explain what the ATS score actually measures once its formula is agreed. Never present it as an official ATS score or hiring decision. The exact score formula remains undecided.
-8. Add focused tests for meaningful behavior, especially PDF validation/extraction boundaries, scoring after criteria are confirmed, API response parsing, and MySQL persistence.
+5. Generate only the confirmed outputs: ATS-style job-match estimate, relevant interview questions, and skill-based suggestions. Do not add extra user-facing analysis features unless requested.
+6. Use the project scoring method documented in `docs/decisions.md`. Label the result as an estimate, show the requirement evidence/status behind it, and state that it is not an official ATS score or a hiring decision.
+7. Do not fabricate model output when Gemini fails. Clearly distinguish unavailable analysis from successful analysis.
+8. Add focused tests for meaningful behavior, especially PDF validation/extraction boundaries, scoring, API response parsing, and MySQL persistence.
 9. Run available checks and report exactly which passed. Clearly identify any check that requires the user's local MySQL server or Gemini credentials.
 10. Keep setup instructions accurate to the implementation. Do not claim the project is fully tested when a dependency, database, or credential was unavailable.
 
@@ -47,8 +47,8 @@ Treat the repository and explicit user decisions as requirements. Do not invent 
 - Product branch: `resume_analyzer`.
 - Agreed stack: Flask, MySQL, Gemini API.
 - Inputs: resume PDF and job description.
-- Outputs: ATS score, relevant interview questions, and skill-based suggestions.
-- MySQL should store extracted resume text and generated analysis results; do not store source PDFs unless the user decides to.
+- Outputs: ATS-style job-match estimate, relevant interview questions, and skill-based suggestions.
+- MySQL should store extracted resume text and generated analysis results. Do not store source PDFs unless the user decides to.
 - The user has MySQL Workbench installed; this does not confirm that a local MySQL server is running or configured.
 - The user may have a Gemini free-tier API key; key presence and quota are not confirmed.
-- The exact ATS scoring formula, retention period, deletion workflow, database name, UI details, and deployment target remain unspecified. Do not assume them.
+- No retention period, deletion workflow, database name, UI design, or deployment target is confirmed. Do not assume them.
