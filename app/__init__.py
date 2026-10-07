@@ -1,15 +1,14 @@
-from flask import Flask, render_template
+from dotenv import load_dotenv
+from flask import Flask
+
+load_dotenv()
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
+    app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
-    @app.get("/")
-    def home():
-        return render_template("index.html")
-
-    @app.get("/health")
-    def health():
-        return {"status": "ok"}
+    from app.routes import main
+    app.register_blueprint(main)
 
     return app
