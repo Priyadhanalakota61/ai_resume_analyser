@@ -13,6 +13,7 @@
       input[type=file], textarea { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
       textarea { min-height: 220px; resize: vertical; }
       .notice { background: #fff8e7; border-left: 4px solid #d99612; padding: 14px; line-height: 1.5; border-radius: 4px; }
+      .storage { background: #eef4ff; padding: 14px; line-height: 1.5; border-radius: 8px; }
       .consent { display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; }
       .consent input { margin-top: 5px; }
       button { margin-top: 20px; padding: 12px 18px; border: 0; border-radius: 8px; background: #2356d8; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
@@ -33,6 +34,8 @@
 
         <label for="job_description">Job description</label>
         <textarea id="job_description" name="job_description" required></textarea>
+
+        <p class="storage">When analysis succeeds, the extracted resume text and generated results are saved in your configured MySQL database. The PDF and job description are not saved. This version has no in-app delete or automatic expiration; remove saved records from MySQL Workbench when you want to delete them.</p>
 
         <div class="notice">
           <strong>Gemini free-tier data-use notice:</strong> The extracted resume text and job description are sent to Google Gemini for analysis. Google says not to submit sensitive, confidential, or personal information to unpaid Gemini API services; free-tier prompts and responses may also be used to improve Google products and may be reviewed by people. Use only a synthetic or anonymized resume. Remove direct identifiers such as names, phone numbers, email addresses, home addresses, and profile links before uploading. Read <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Google's Gemini API terms</a>.
