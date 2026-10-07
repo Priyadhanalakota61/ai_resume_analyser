@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template, request
 
+from app.scoring import calculate_match_score
+
 from app.database import (
     DatabaseConfigurationError,
     DatabaseSaveError,
@@ -14,14 +16,6 @@ from app.services.gemini_analyzer import (
 from app.services.pdf_extractor import PdfExtractionError, extract_resume_text
 
 main = Blueprint("main", __name__)
-
-
-def calculate_match_score(requirements: list[dict]) -> int | None:
-    if not requirements:
-        return None
-
-    matched = sum(item["status"] == "matched" for item in requirements)
-    return round(matched / len(requirements) * 100)
 
 
 @main.route("/", methods=["GET", "POST"])
