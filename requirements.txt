@@ -1,0 +1,9 @@
+Flask
+python-dotenv
+pypdf
+google-genai
+pydantic
+SQLAlchemy
+PyMySQL
+pytest
+gunicorn

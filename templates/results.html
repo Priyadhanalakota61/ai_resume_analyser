@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analysis results · Resume Analyzer</title>
+    <style>
+      :root { font-family: Arial, sans-serif; color: #172033; background: #f4f7fb; }
+      body { margin: 0; }
+      main { max-width: 900px; margin: 40px auto; padding: 28px; }
+      section { margin: 18px 0; padding: 22px; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px #18243a0d; }
+      h1, h2 { margin-top: 0; }
+      .score { font-size: 48px; font-weight: 700; color: #2356d8; }
+      .muted { color: #526078; line-height: 1.5; }
+      .requirement { border-top: 1px solid #e5eaf1; padding: 14px 0; }
+      .status { font-size: .85rem; font-weight: 700; }
+      .matched { color: #176c43; }
+      .not-found { color: #9a4b0b; }
+      li { margin: 8px 0; line-height: 1.5; }
+      a.button { display: inline-block; margin-top: 12px; padding: 12px 18px; border-radius: 8px; background: #2356d8; color: white; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Resume analysis</h1>
+      <p class="muted">Analysis record #{{ record_id }} has been saved to MySQL. The uploaded PDF itself was not saved.</p>
+
+      <section>
+        <h2>ATS-style job-match estimate</h2>
+        {% if result.job_match_score is not none %}
+          <div class="score">{{ result.job_match_score }}%</div>
+          <p>{{ result.requirements|selectattr('status', 'equalto', 'matched')|list|length }} of {{ result.requirements|length }} identified job requirements had supporting evidence in the resume.</p>
+          <p class="muted">Project method: matched requirements divided by all identified requirements, counted equally. This is an estimate from this app, not an official ATS score or a hiring decision.</p>
+        {% else %}
+          <p>No distinct job requirements were identified, so a score could not be calculated.</p>
+        {% endif %}
+      </section>
+
+      <section>
+        <h2>Job requirements and resume evidence</h2>
+        {% for item in result.requirements %}
+          <div class="requirement">
+            <strong>{{ item.requirement }}</strong>
+            {% if item.status == 'matched' %}
+              <p class="status matched">Supporting evidence found</p>
+              <p>{{ item.resume_evidence }}</p>
+            {% else %}
+              <p class="status not-found">Not found in the extracted resume text</p>
+            {% endif %}
+          </div>
+        {% else %}
+          <p>No distinct requirements were returned by the analysis.</p>
+        {% endfor %}
+      </section>
+
+      <section>
+        <h2>Skills identified</h2>
+        <h3>Found in the resume</h3>
+        {% if result.skills_found %}
+          <ul>{% for skill in result.skills_found %}<li>{{ skill }}</li>{% endfor %}</ul>
+        {% else %}
+          <p>No skills were identified as matches.</p>
+        {% endif %}
+        <h3>Not found in the resume</h3>
+        {% if result.skills_missing %}
+          <ul>{% for skill in result.skills_missing %}<li>{{ skill }}</li>{% endfor %}</ul>
+        {% else %}
+          <p>No missing skills were identified.</p>
+        {% endif %}
+      </section>
+
+      <section>
+        <h2>Suggestions</h2>
+        {% if result.suggestions %}
+          <ul>{% for suggestion in result.suggestions %}<li>{{ suggestion }}</li>{% endfor %}</ul>
+        {% else %}
+          <p>No suggestions were returned.</p>
+        {% endif %}
+      </section>
+
+      <section>
+        <h2>Interview practice questions</h2>
+        {% if result.interview_questions %}
+          <ol>{% for question in result.interview_questions %}<li>{{ question }}</li>{% endfor %}</ol>
+        {% else %}
+          <p>No interview questions were returned.</p>
+        {% endif %}
+      </section>
+
+      <a class="button" href="/">Analyze another resume</a>
+    </main>
+  </body>
+</html>
