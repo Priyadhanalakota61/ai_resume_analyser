@@ -4,7 +4,7 @@ Flask / MySQL / Gemini portfolio prototype. Upload a **synthetic or thoroughly a
 
 ## Results
 
-- Resume skills and suggested role searches with supporting excerpts.
+- Resume skills and suggested role searches with supporting excerpts. Unsupported profile entries are omitted individually; if no role survives, enter a role manually. Explicit short skill tokens such as SQL are accepted only as whole tokens.
 - Job title, company, source location, publisher, application link, source-reported date and retrieval time.
 - Job-match estimate, explicit requirements with job/resume excerpts, strengths, gaps, suggestions and role-specific interview practice questions.
 - Matching is `matched requirements / all identified requirements * 100`, counted equally in Python. No requirements means no score. It is **not an official ATS score**, eligibility decision or screening prediction. Gaps mean evidence was not found; questions are practice suggestions.

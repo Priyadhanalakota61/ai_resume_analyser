@@ -92,7 +92,8 @@ def test_profile_evidence(monkeypatch):
     value=resume_profile.ResumeProfile(skills=[dict(label='Python',resume_evidence='Built Kubernetes clusters')],
         suggested_roles=[dict(label='Python Developer',resume_evidence='Built REST APIs with Python and Flask.')])
     monkeypatch.setattr(resume_profile,'generate_structured',lambda *a:value)
-    with pytest.raises(GeminiAnalysisError):resume_profile.extract_profile(RESUME)
+    result=resume_profile.extract_profile(RESUME)
+    assert not result.skills and len(result.suggested_roles)==1 and result.discarded_entries==1
 
 
 def test_store_expiry_ownership_capacity():
@@ -248,7 +249,8 @@ def test_whitespace_evidence_rejected(monkeypatch):
     with pytest.raises(GeminiAnalysisError):validate_evidence(bad,RESUME,JD)
     profile=resume_profile.ResumeProfile(skills=[],suggested_roles=[dict(label='Python Developer',resume_evidence=' '*12)])
     monkeypatch.setattr(resume_profile,'generate_structured',lambda *a:profile)
-    with pytest.raises(GeminiAnalysisError):resume_profile.extract_profile(RESUME)
+    result=resume_profile.extract_profile(RESUME)
+    assert not result.suggested_roles and result.discarded_entries==1
 
 
 @pytest.mark.parametrize('description',['Needs Python.',JD+'...'])
@@ -261,3 +263,37 @@ def test_manual_insufficient_description_no_model_call(app,monkeypatch,descripti
     response=client.post('/',data={'csrf_token':csrf,'resume_pdf':(io.BytesIO(b'fake'),'demo.pdf'),
         'gemini_data_consent':'yes','job_description':description})
     assert response.status_code==400 and unexpected.call_count==0
+
+
+def test_profile_keeps_valid_skills_and_short_tokens(monkeypatch):
+    profile=resume_profile.ResumeProfile(skills=[
+        dict(label='SQL',resume_evidence='SQL'),
+        dict(label='Python',resume_evidence='Built REST APIs with Python and Flask.'),
+        dict(label='Kubernetes',resume_evidence='Built production Kubernetes clusters.')],
+        suggested_roles=[dict(label='Python Developer',resume_evidence='Built REST APIs with Python and Flask.')],
+        discarded_entries=99)
+    monkeypatch.setattr(resume_profile,'generate_structured',lambda *a:profile)
+    result=resume_profile.extract_profile(RESUME)
+    assert [x.label for x in result.skills]==['SQL','Python']
+    assert len(result.suggested_roles)==1 and result.discarded_entries==1
+
+
+def test_all_rejected_profile_can_search_manually(app,monkeypatch):
+    from app import discovery
+    client=app.test_client();key,item=setup_workflow(app,client)
+    item.profile={'skills':[],'suggested_roles':[],'discarded_entries':2};item.searched=False
+    page=client.get(f'/discover/{key}')
+    assert page.status_code==200 and b'No role suggestion passed' in page.data
+    assert page.data.count(b'name="roles"')==3
+    monkeypatch.setattr(discovery,'search_jobs',lambda *a:([],[]))
+    response=client.post(f'/discover/{key}/search',data={'csrf_token':'synthetic-csrf',
+        'roles':['Python Developer'],'locations':['Bengaluru']})
+    assert response.status_code==302 and item.roles==['Python Developer']
+
+
+def test_short_skill_needs_whole_token_and_empty_evidence_rejected():
+    go=resume_profile.EvidenceItem(label='Go',resume_evidence='Go')
+    assert not resume_profile.supported(go,'built django applications',skill=True)
+    assert resume_profile.supported(go,'languages: go, python',skill=True)
+    empty=resume_profile.EvidenceItem(label='Python',resume_evidence='')
+    assert not resume_profile.supported(empty,RESUME,skill=True)

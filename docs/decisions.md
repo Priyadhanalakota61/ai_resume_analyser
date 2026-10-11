@@ -50,3 +50,7 @@ Official terms: https://ai.google.dev/gemini-api/terms
 - Save each completed job comparison in the existing analysis_records generated_result JSON with profile/source metadata. Do not store raw job descriptions or PDF; quoted evidence belongs to generated results.
 - In-process transient workflow state expires after 30 minutes (pruned on access), bounded at 20, with browser ownership/CSRF. Sequential per-job HTTP requests reuse outcomes in that workflow. This is not durable multi-worker hosting.
 - Keep working Gemini env override. Up to nine provider and eleven Gemini calls per completed workflow; no fabricated fallback results or automatic unlimited retries.
+
+## Profile evidence recovery
+
+Reject unsupported profile entries individually rather than aborting all discovery. Keep valid excerpts; allow exact whole-token short skill names. Show an omission notice and editable manual role inputs when no suggestions survive. Do not invent fallback skills/roles or relax per-job evidence/scoring checks. Malformed provider/model responses still report an error.
