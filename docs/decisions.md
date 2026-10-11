@@ -54,3 +54,6 @@ Official terms: https://ai.google.dev/gemini-api/terms
 ## Profile evidence recovery
 
 Reject unsupported profile entries individually rather than aborting all discovery. Keep valid excerpts; allow exact whole-token short skill names. Show an omission notice and editable manual role inputs when no suggestions survive. Do not invent fallback skills/roles or relax per-job evidence/scoring checks. Malformed provider/model responses still report an error.
+
+### Job-provider response fix
+The user's successful local HTTP 200 diagnostic confirmed search-v2 returns `data` as an object with `jobs` and `cursor`. Parse `data.jobs`, retain list-envelope compatibility, and distinguish malformed envelopes from valid empty results. Regression tests use synthetic postings; no live credentials are included.

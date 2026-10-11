@@ -297,3 +297,37 @@ def test_short_skill_needs_whole_token_and_empty_evidence_rejected():
     assert resume_profile.supported(go,'languages: go, python',skill=True)
     empty=resume_profile.EvidenceItem(label='Python',resume_evidence='')
     assert not resume_profile.supported(empty,RESUME,skill=True)
+
+
+@pytest.mark.parametrize('nested', [True, False])
+def test_provider_jobs_envelope(monkeypatch, nested):
+    monkeypatch.setenv('JOB_SEARCH_API_KEY', 'synthetic-test-key')
+    client = Mock(); response = Mock(status_code=200)
+    postings = [raw('nested-job')]
+    response.json.return_value = {'data': {'jobs': postings, 'cursor': 'unused-cursor'} if nested else postings}
+    client.get.return_value = response
+    fake_client(monkeypatch, client)
+    jobs, warnings = job_search.search_jobs(['Python Developer'], ['Bengaluru'])
+    assert [job.id for job in jobs] == ['nested-job']
+    assert not warnings
+    assert client.get.call_count == 1
+
+
+@pytest.mark.parametrize('jobs_value', [None, {}, 'invalid'])
+def test_provider_invalid_nested_jobs(monkeypatch, jobs_value):
+    monkeypatch.setenv('JOB_SEARCH_API_KEY', 'synthetic-test-key')
+    client = Mock(); response = Mock(status_code=200)
+    response.json.return_value = {'data': {'jobs': jobs_value, 'cursor': None}}
+    client.get.return_value = response
+    fake_client(monkeypatch, client)
+    jobs, warnings = job_search.search_jobs(['Python Developer'], ['Bengaluru'])
+    assert not jobs and 'unexpected response format' in warnings[0]
+
+
+def test_provider_empty_nested_jobs(monkeypatch):
+    monkeypatch.setenv('JOB_SEARCH_API_KEY', 'synthetic-test-key')
+    client = Mock(); response = Mock(status_code=200)
+    response.json.return_value = {'data': {'jobs': [], 'cursor': None}}
+    client.get.return_value = response
+    fake_client(monkeypatch, client)
+    assert job_search.search_jobs(['Python Developer'], ['Bengaluru']) == ([], [])

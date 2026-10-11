@@ -136,8 +136,12 @@ def search_jobs(roles, locations):
                     response.raise_for_status()
                     payload = response.json()
                     data = payload.get('data') if isinstance(payload, dict) else None
+                    # search-v2 nests postings under data.jobs alongside its cursor.
+                    if isinstance(data, dict):
+                        data = data.get('jobs')
                     if not isinstance(data, list):
-                        raise ValueError('Unexpected data shape')
+                        warnings.append(f'Job provider returned an unexpected response format for {role} in {location}.')
+                        continue
                     for raw in data[:100]:
                         if remote and isinstance(raw, dict) and raw.get('job_is_remote') is not True:
                             continue
