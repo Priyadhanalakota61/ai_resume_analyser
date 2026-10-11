@@ -6,6 +6,7 @@ from app.services.pdf_extractor import PdfExtractionError, extract_resume_text
 from app.services.resume_profile import extract_profile
 from app.services.job_search import JobSearchError, search_jobs, provider_ready
 from app.scoring import calculate_match_score
+from app.services.experience import resume_experience_hint
 
 jobs = Blueprint('jobs', __name__)
 ERRORS = (DatabaseConfigurationError, DatabaseSaveError, GeminiAnalysisError, GeminiConfigurationError, JobSearchError, PdfExtractionError)
@@ -61,7 +62,9 @@ def profile():
             raise ValueError('Resume text exceeds 30,000 characters. Use a shorter resume.')
         ensure_database_ready()
         result = extract_profile(resume)
-        token = current_app.extensions['workflows'].create(owner(), resume, result.model_dump(mode='json'))
+        profile_data = result.model_dump(mode='json')
+        profile_data['experience_hint'] = resume_experience_hint(resume)
+        token = current_app.extensions['workflows'].create(owner(), resume, profile_data)
         item = workflow(token)
         item.locations = locations
         return redirect(url_for('jobs.review', token=token))
@@ -78,12 +81,18 @@ def review(token):
 def search(token):
     item = workflow(token)
     try:
+        duration = request.form.get('experience_months', '').strip()
+        if len(duration) > 3 or not duration.isascii() or not duration.isdigit() or not 0 <= int(duration) <= 600:
+            raise ValueError('Confirm your total work experience in whole months (0 to 600). Enter 0 for no experience.')
+        experience_months = int(duration)
         roles = bounded_inputs('roles', 100)
         locations = bounded_inputs('locations', 100)
         with item.lock:
             if item.searched:
                 return redirect(url_for('jobs.dashboard', token=token))
-            item.jobs, item.warnings = search_jobs(roles, locations)
+            item.jobs, item.warnings = search_jobs(roles, locations, experience_months=experience_months)
+            item.experience_months = experience_months
+            item.profile['confirmed_experience_months'] = experience_months
             item.roles, item.locations, item.searched = roles, locations, True
         return redirect(url_for('jobs.dashboard', token=token))
     except (JobSearchError, ValueError) as exc:

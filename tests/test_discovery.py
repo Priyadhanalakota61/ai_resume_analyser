@@ -198,11 +198,11 @@ def test_profile_search_dashboard_roundtrip(app,monkeypatch):
     assert response.status_code==302
     review_url=response.headers['Location']
     assert b'Python Developer' in client.get(review_url).data
-    response=client.post(review_url+'/search',data={'csrf_token':csrf,'roles':['Python Developer'], 'locations':['Bengaluru','Remote']})
+    response=client.post(review_url+'/search',data={'csrf_token':csrf,'experience_months':'24','roles':['Python Developer'], 'locations':['Bengaluru','Remote']})
     assert response.status_code==302
     page=client.get(response.headers['Location'])
     assert b'One search timed out' in page.data and b'Example Demo Company' in page.data
-    client.post(review_url+'/search',data={'csrf_token':csrf,'roles':['Python Developer'],'locations':['Remote']})
+    client.post(review_url+'/search',data={'csrf_token':csrf,'experience_months':'24','roles':['Python Developer'],'locations':['Remote']})
     assert search.call_count==1
     with client.session_transaction() as sess:
         assert RESUME not in str(dict(sess))
@@ -285,9 +285,9 @@ def test_all_rejected_profile_can_search_manually(app,monkeypatch):
     page=client.get(f'/discover/{key}')
     assert page.status_code==200 and b'No role suggestion passed' in page.data
     assert page.data.count(b'name="roles"')==3
-    monkeypatch.setattr(discovery,'search_jobs',lambda *a:([],[]))
+    monkeypatch.setattr(discovery,'search_jobs',lambda *a,**kw:([],[]))
     response=client.post(f'/discover/{key}/search',data={'csrf_token':'synthetic-csrf',
-        'roles':['Python Developer'],'locations':['Bengaluru']})
+        'experience_months':'24','roles':['Python Developer'],'locations':['Bengaluru']})
     assert response.status_code==302 and item.roles==['Python Developer']
 
 

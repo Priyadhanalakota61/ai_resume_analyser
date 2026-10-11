@@ -7,6 +7,7 @@ from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 import requests
 from pydantic import BaseModel
+from app.services.experience import job_experience
 
 
 class JobSearchError(RuntimeError):
@@ -25,6 +26,8 @@ class JobPosting(BaseModel):
     retrieved_at: str
     description: str
     description_usable: bool
+    minimum_experience_months: int | None = None
+    experience_evidence: str = ""
 
     def metadata(self):
         return self.model_dump(exclude={'description'})
@@ -94,13 +97,15 @@ def normalize_posting(raw, now):
         return None
     description = value('job_description', 40000)
     usable = 200 <= len(description) <= 30000 and not description.endswith(('...', '…'))
+    minimum_months, experience_evidence = job_experience(description)
     location = value('job_location') or ', '.join(filter(None, [value('job_city'), value('job_state'), value('job_country')]))
     return JobPosting(id=identifier, title=title, company=value('employer_name') or 'Company not supplied',
         location=location or ('Remote' if raw.get('job_is_remote') else 'Location not supplied'),
         publisher=str(chosen.get('publisher') or raw.get('job_publisher') or 'JSearch')[:200],
         apply_url=chosen['apply_link'], direct=chosen.get('is_direct') is True,
         posted_at=posted.isoformat(), retrieved_at=now.isoformat(), description=description,
-        description_usable=usable)
+        description_usable=usable, minimum_experience_months=minimum_months,
+        experience_evidence=experience_evidence)
 
 
 def provider_ready():
@@ -112,11 +117,12 @@ def provider_ready():
     return country
 
 
-def search_jobs(roles, locations):
+def search_jobs(roles, locations, experience_months=None):
     country = provider_ready()
     now = datetime.now(timezone.utc)
     jobs, warnings = [], []
     seen_ids, seen_links, seen_titles = set(), set(), set()
+    excluded_ids = set()
     with requests.Session() as client:
         for role in roles[:3]:
             for location in locations[:3]:
@@ -148,6 +154,9 @@ def search_jobs(roles, locations):
                         job = normalize_posting(raw, now)
                         if not job:
                             continue
+                        if experience_months is not None and job.minimum_experience_months is not None and job.minimum_experience_months > experience_months:
+                            excluded_ids.add(job.id)
+                            continue
                         link = canonical_url(job.apply_url)
                         title_key = (job.title.casefold(), job.company.casefold(), job.location.casefold())
                         if job.id in seen_ids or link in seen_links or title_key in seen_titles:
@@ -158,4 +167,6 @@ def search_jobs(roles, locations):
                     raise
                 except (requests.RequestException, ValueError, TypeError):
                     warnings.append(f'Could not retrieve {role} in {location}; other searches may still have results.')
+    if excluded_ids:
+        warnings.append(f'Excluded {len(excluded_ids)} postings whose explicit minimum experience exceeds your confirmed {experience_months} months.')
     return sorted(jobs, key=lambda j: j.posted_at, reverse=True)[:10], list(dict.fromkeys(warnings))

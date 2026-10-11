@@ -17,6 +17,7 @@ class Workflow:
     roles: list = field(default_factory=list)
     locations: list = field(default_factory=list)
     outcomes: dict = field(default_factory=dict)
+    experience_months: int | None = None
     searched: bool = False
     lock: RLock = field(default_factory=RLock)
 

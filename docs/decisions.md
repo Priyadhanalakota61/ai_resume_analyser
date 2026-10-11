@@ -60,3 +60,6 @@ The user's successful local HTTP 200 diagnostic confirmed search-v2 returns `dat
 
 ### Structured analysis compatibility
 A local synthetic test succeeds without structured output while the analysis request returns HTTP 400 INVALID_ARGUMENT with no field detail. Simplify the provider schema by inlining definitions and omitting length/count constraints and titles/defaults from the wire representation. Preserve the original Pydantic response validation and evidence checks. This addresses a schema compatibility suspect; live success must be confirmed locally and no specific rejected keyword is established.
+
+### Experience-aware search
+User requested filtering jobs by resume experience rather than analysing clearly over-level listings. Require a user-confirmed total in whole months, optionally prefilled from one unambiguous explicit resume duration; do not infer from graduation or silently sum overlaps. Parse explicit English experience minima conservatively and filter above-total postings before the ten-result cap and Gemini analysis. Unknown requirements remain visible and labelled, never declared suitable. Do not interpret preferred-only or upper-bound wording as a minimum. Preserve newest-first ordering among retained postings and manual comparison.
