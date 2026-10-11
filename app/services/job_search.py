@@ -123,6 +123,7 @@ def search_jobs(roles, locations, experience_months=None):
     jobs, warnings = [], []
     seen_ids, seen_links, seen_titles = set(), set(), set()
     excluded_ids = set()
+    unclear_ids = set()
     with requests.Session() as client:
         for role in roles[:3]:
             for location in locations[:3]:
@@ -154,6 +155,9 @@ def search_jobs(roles, locations, experience_months=None):
                         job = normalize_posting(raw, now)
                         if not job:
                             continue
+                        if experience_months is not None and job.minimum_experience_months is None:
+                            unclear_ids.add(job.id)
+                            continue
                         if experience_months is not None and job.minimum_experience_months is not None and job.minimum_experience_months > experience_months:
                             excluded_ids.add(job.id)
                             continue
@@ -167,6 +171,8 @@ def search_jobs(roles, locations, experience_months=None):
                     raise
                 except (requests.RequestException, ValueError, TypeError):
                     warnings.append(f'Could not retrieve {role} in {location}; other searches may still have results.')
+    if unclear_ids:
+        warnings.append(f'Excluded {len(unclear_ids)} postings whose experience requirements could not be confirmed from the supplied description. Unclear postings are not analysed.')
     if excluded_ids:
         warnings.append(f'Excluded {len(excluded_ids)} postings whose explicit minimum experience exceeds your confirmed {experience_months} months.')
     return sorted(jobs, key=lambda j: j.posted_at, reverse=True)[:10], list(dict.fromkeys(warnings))

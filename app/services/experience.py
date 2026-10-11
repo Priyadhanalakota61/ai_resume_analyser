@@ -4,7 +4,7 @@ from decimal import Decimal
 
 NUMBER = r'\d{1,2}(?:\.\d{1,2})?'
 DURATION = rf'(?P<low>{NUMBER})\s*(?:(?:[-–—]|to)\s*(?P<high>{NUMBER})\s*)?(?:\+\s*)?(?P<unit>years?|yrs?|months?)'
-AFTER = re.compile(rf'(?<![\w.]){DURATION}\s+(?:of\s+)?(?:(?:relevant|professional|work|commercial|industry|hands-on|overall|total)\s+)*experience\b', re.I)
+AFTER = re.compile(rf'(?<![\w.]){DURATION}\s+(?:of\s+)?(?:[A-Za-z][A-Za-z/-]*\s+){{0,8}}experience\b', re.I)
 BEFORE = re.compile(rf'\bexperience\s*(?::|of|with|required)?\s*(?:at least|minimum(?: of)?)?\s*{DURATION}\b', re.I)
 OPTIONAL = re.compile(r'\b(preferred|desirable|ideally|optional|nice to have|up to|maximum|not required|no experience)\b', re.I)
 
@@ -39,6 +39,7 @@ def resume_experience_hint(text):
 def job_experience(text):
     values = explicit_experience(text, job=True)
     if not values:
-        return None, ''
+        entry = re.search(r'\b(?:no (?:prior |previous |professional |work )?experience (?:is )?(?:required|necessary|needed)|freshers? (?:are )?(?:welcome|can apply)|open to freshers)\b', text, re.I)
+        return (0, entry.group(0)) if entry else (None, '')
     # All explicit requirements must be met; take the largest stated minimum.
     return max(values, key=lambda value: value[0])

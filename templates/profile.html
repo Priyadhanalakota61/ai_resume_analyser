@@ -9,7 +9,7 @@
 <label for="experience_months">Total work experience in months</label>
 <input id="experience_months" name="experience_months" type="number" min="0" max="600" step="1" required value="{{ request.form.get('experience_months', hint.get('months') if hint.get('months') is not none else '') }}">
 {% if hint.get('evidence') %}<p class="muted">Explicit resume excerpt: {{ hint.evidence }}. Review the suggested duration before searching.</p>{% else %}<p class="muted">We could not identify one unambiguous explicit experience duration. Enter your total; we do not calculate it from education dates or assume employment during gaps.</p>{% endif %}
-<p class="muted">Examples: 2 years = 24 months; a 5-month internship = 5 months; no experience = 0. Count each month once if roles overlap. Include internships if you want them counted; employers may treat them differently. Jobs with a parsed minimum above this total are excluded. Unclear requirements stay labelled as not confirmed.</p>
+<p class="muted">Examples: 2 years = 24 months; a 5-month internship = 5 months; no experience = 0. Count each month once if roles overlap. Include internships if you want them counted; employers may treat them differently. Jobs with a parsed minimum above this total are excluded. Postings with unclear experience requirements are also excluded; fewer than ten jobs may remain.</p>
 <h2>Role searches</h2>
 {% if not item.profile.suggested_roles %}<p class="muted">No role suggestion passed the evidence check. Enter at least one role you want to search for. This is your search preference, not a claim about your qualifications.</p>{% endif %}
 {% for i in range(3) %}
