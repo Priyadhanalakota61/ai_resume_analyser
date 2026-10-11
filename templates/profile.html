@@ -1,0 +1,23 @@
+{% extends 'base.html' %}{% block title %}Review role searches · ResumeMatch{% endblock %}{% block content %}
+<p class="eyebrow">STEP 2 / REVIEW YOUR SEARCH</p><h1>Your experience, your direction.</h1>
+<p class="muted">These role titles are suggestions based on resume excerpts. Review or edit them before searching.</p>
+{% if item.profile.discarded_entries|default(0) %}<p class="error" role="status">Some generated entries failed the exact resume-evidence check and were omitted. Only supported suggestions are shown; you can enter your own role searches below.</p>{% endif %}
+<section class="card"><h2>Skills supported by your resume</h2><div class="chips">{% for skill in item.profile.skills %}<details><summary>{{ skill.label }}</summary><p>{{ skill.resume_evidence }}</p></details>{% else %}<p>No skills passed the evidence check. You can still enter role searches below; each job comparison will check the resume independently.</p>{% endfor %}</div></section>
+<form method="post" action="{{ url_for('jobs.search', token=token) }}" class="card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<h2>Confirm your work experience</h2>
+{% set hint = item.profile.get('experience_hint', {}) %}
+<label for="experience_months">Total work experience in months</label>
+<input id="experience_months" name="experience_months" type="number" min="0" max="600" step="1" required value="{{ request.form.get('experience_months', hint.get('months') if hint.get('months') is not none else '') }}">
+{% if hint.get('evidence') %}<p class="muted">Explicit resume excerpt: {{ hint.evidence }}. Review the suggested duration before searching.</p>{% else %}<p class="muted">We could not identify one unambiguous explicit experience duration. Enter your total; we do not calculate it from education dates or assume employment during gaps.</p>{% endif %}
+<p class="muted">Examples: 2 years = 24 months; a 5-month internship = 5 months; no experience = 0. Count each month once if roles overlap. Include internships if you want them counted; employers may treat them differently. Jobs with a parsed minimum above this total are excluded. Postings with unclear experience requirements are also excluded; fewer than ten jobs may remain.</p>
+<h2>Role searches</h2>
+{% if not item.profile.suggested_roles %}<p class="muted">No role suggestion passed the evidence check. Enter at least one role you want to search for. This is your search preference, not a claim about your qualifications.</p>{% endif %}
+{% for i in range(3) %}
+{% set role = item.profile.suggested_roles[i] if i < item.profile.suggested_roles|length else none %}
+<label for="role{{ i }}">Role {{ i+1 }}{% if i %} (optional){% endif %}</label>
+<input id="role{{ i }}" name="roles" value="{{ role.label if role else '' }}" placeholder="For example: Python Developer" maxlength="100" {% if not i %}required{% endif %}>
+{% if role %}<p class="muted">Supporting resume excerpt: {{ role.resume_evidence }}</p>{% endif %}
+{% endfor %}
+<h2>Up to three locations</h2>{% for i in range(3) %}<label for="location{{ i }}">Location {{ i+1 }}{% if i %} (optional){% endif %}</label><input id="location{{ i }}" name="locations" maxlength="100" value="{{ item.locations[i] if i < item.locations|length else '' }}" {% if not i %}required{% endif %}>{% endfor %}
+<p class="muted">Search country: configured by JOB_SEARCH_COUNTRY (default India). Remote means provider-reported remote jobs in that country; check each posting's eligibility restrictions.</p>
+<button type="submit">Find recent jobs &amp; compare my fit</button><p class="muted">Searches the last 30 days; up to 9 provider calls. No applications are submitted. Your private workflow expires after 30 minutes or app restart.</p></form>{% endblock %}

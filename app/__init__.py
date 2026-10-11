@@ -1,3 +1,5 @@
+import os
+import secrets
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -11,6 +13,14 @@ def create_app() -> Flask:
         __name__,
         template_folder=str(Path(__file__).resolve().parent.parent / "templates"),
     )
+    app.secret_key = os.getenv("SECRET_KEY", "").strip() or secrets.token_hex(32)
+    app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
+    from app.transient import WorkflowStore
+    app.extensions["workflows"] = WorkflowStore()
+    from app.discovery import jobs, csrf_token
+    app.jinja_env.globals["csrf_token"] = csrf_token
+    app.register_blueprint(jobs)
+
     app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
     from app.routes import main

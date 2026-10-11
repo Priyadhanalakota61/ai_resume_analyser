@@ -33,6 +33,8 @@ def home():
         return render_template("index.html", error="Upload a file with a .pdf extension.")
     if not job_description:
         return render_template("index.html", error="Enter the job description.")
+    if len(job_description) < 200 or job_description.endswith(("...", "…")):
+        return render_template("index.html", error="Job description is too short or visibly truncated. Paste the complete posting (at least 200 characters); no score was calculated."), 400
     if consent != "yes":
         return render_template(
             "index.html",
@@ -43,6 +45,9 @@ def home():
         resume_text = extract_resume_text(resume_file.read())
     except PdfExtractionError as exc:
         return render_template("index.html", error=str(exc))
+
+    if len(resume_text) > 30000 or len(job_description) > 30000:
+        return render_template("index.html", error="Resume and job description must each be below 30,000 characters."), 400
 
     try:
         ensure_database_ready()

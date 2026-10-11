@@ -28,7 +28,25 @@
 
       {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 
+      <section style="padding:20px;background:#eef4ff;border-radius:12px;margin-bottom:30px">
+        <h2>Find jobs from your resume</h2>
+        <p>Upload once, choose up to three locations, review suggested roles, and compare up to ten recent sourced postings.</p>
+        <form method="post" action="/discover" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="discovery_pdf">Synthetic / anonymized resume PDF</label>
+          <input id="discovery_pdf" name="resume_pdf" type="file" accept=".pdf" required>
+          {% for i in range(3) %}
+          <label for="location{{ i }}">Location {{ i+1 }}{% if i %} (optional){% endif %}</label>
+          <input id="location{{ i }}" name="locations" maxlength="100" placeholder="Bengaluru, India or Remote" {% if not i %}required{% endif %} style="padding:12px;box-sizing:border-box;width:100%">
+          {% endfor %}
+          <label class="consent"><input type="checkbox" name="gemini_data_consent" value="yes" required><span>I confirm this resume contains no personal, confidential or sensitive information. Extracted text is sent to Gemini. Role search terms and locations are sent to the job provider.</span></label>
+          <p class="muted">Requires a configured job-provider key. Listings are provider-reported, not employer-confirmed open. Extracted text and completed analyses are saved in MySQL; no PDF or raw job description is saved. See the data-use notice below.</p>
+          <button type="submit">Review my skills &amp; role searches</button>
+        </form>
+      </section>
+      <h2>Compare a specific job description</h2>
       <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="resume_pdf">Resume PDF</label>
         <input id="resume_pdf" name="resume_pdf" type="file" accept=".pdf,application/pdf" required>
 

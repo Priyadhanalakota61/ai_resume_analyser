@@ -7,3 +7,4 @@ SQLAlchemy
 PyMySQL
 pytest
 gunicorn
+requests
