@@ -57,3 +57,6 @@ Reject unsupported profile entries individually rather than aborting all discove
 
 ### Job-provider response fix
 The user's successful local HTTP 200 diagnostic confirmed search-v2 returns `data` as an object with `jobs` and `cursor`. Parse `data.jobs`, retain list-envelope compatibility, and distinguish malformed envelopes from valid empty results. Regression tests use synthetic postings; no live credentials are included.
+
+### Structured analysis compatibility
+A local synthetic test succeeds without structured output while the analysis request returns HTTP 400 INVALID_ARGUMENT with no field detail. Simplify the provider schema by inlining definitions and omitting length/count constraints and titles/defaults from the wire representation. Preserve the original Pydantic response validation and evidence checks. This addresses a schema compatibility suspect; live success must be confirmed locally and no specific rejected keyword is established.

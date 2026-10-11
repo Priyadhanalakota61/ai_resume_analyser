@@ -31,6 +31,28 @@ def normalized(text):
     return ' '.join(text.split()).casefold()
 
 
+def provider_schema(schema):
+    """Keep the wire schema simple; enforce all model constraints locally."""
+    document = schema.model_json_schema()
+    definitions = document.get('$defs', {})
+    local_only = {'$defs', 'title', 'default', 'minLength', 'maxLength',
+                  'minItems', 'maxItems'}
+
+    def simplify(value):
+        if isinstance(value, list):
+            return [simplify(item) for item in value]
+        if not isinstance(value, dict):
+            return value
+        if '$ref' in value:
+            reference = value['$ref']
+            if not reference.startswith('#/$defs/'):
+                raise ValueError('Unsupported schema reference')
+            return simplify(definitions[reference.removeprefix('#/$defs/')])
+        return {key: simplify(item) for key, item in value.items() if key not in local_only}
+
+    return simplify(document)
+
+
 def generate_structured(prompt, schema):
     key = os.getenv('GEMINI_API_KEY', '').strip()
     if not key:
@@ -41,7 +63,7 @@ def generate_structured(prompt, schema):
     try:
         with genai.Client(api_key=key, http_options={'timeout': 45000}) as client:
             response = client.models.generate_content(model=model, contents=prompt,
-                config={'response_mime_type': 'application/json', 'response_schema': schema})
+                config={'response_mime_type': 'application/json', 'response_schema': provider_schema(schema)})
         if not response.text:
             raise GeminiAnalysisError('Gemini returned an empty response.')
         return schema.model_validate_json(response.text)
