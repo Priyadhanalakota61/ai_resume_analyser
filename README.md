@@ -1,75 +1,95 @@
-# Resume Analyzer
+# ResumeMatch — Resume Analyzer and Job Discovery
 
-Resume Analyzer takes a resume PDF and a job description, then provides an ATS-style job-match estimate, interview practice questions, and suggestions based on skills.
+Flask / MySQL / Gemini portfolio prototype. Upload a **synthetic or thoroughly anonymized** selectable-text resume PDF, enter up to **three locations**, review/edit suggested roles, and discover up to **ten recent sourced postings** across those locations. Jobs load first; their comparisons run sequentially and appear progressively. The original manual PDF + job-description comparison remains available.
 
-## Current implementation
+## Results
 
-- Flask application and upload form.
-- Extracts selectable text from PDF resumes in memory; scanned-image OCR is not implemented.
-- Sends the extracted text and job description to the configured Gemini model only after the user confirms the resume is synthetic or anonymized.
-- Shows a job-match estimate, requirement evidence, skill feedback, suggestions, and interview questions.
-- Saves extracted resume text and generated results to MySQL. The uploaded PDF and job description are not stored.
-- MySQL creates the `analysis_records` table automatically when the selected database exists and is reachable.
-- The request limit is 5 MiB.
+- Resume skills and suggested role searches with supporting excerpts.
+- Job title, company, source location, publisher, application link, source-reported date and retrieval time.
+- Job-match estimate, explicit requirements with job/resume excerpts, strengths, gaps, suggestions and role-specific interview practice questions.
+- Matching is `matched requirements / all identified requirements * 100`, counted equally in Python. No requirements means no score. It is **not an official ATS score**, eligibility decision or screening prediction. Gaps mean evidence was not found; questions are practice suggestions.
+- Exact excerpt checks reject unsupported evidence, but do not prove semantic correctness or eliminate all model errors.
 
-## ATS-style job-match estimate
+## Job source and honesty
 
-This project uses a transparent, project-defined estimate:
+The adapter uses [JSearch through OpenWeb Ninja](https://www.openwebninja.com/api/jsearch), `GET https://api.openwebninja.com/jsearch/search-v2`, authenticated with `x-api-key`. This is the **direct portal key**, not a RapidAPI key. Configure `JOB_SEARCH_API_KEY` locally. No account or subscription is created by this project; check provider terms and quotas before use.
 
-`matched requirements / all identified job requirements * 100`
+Searches request the last month and locally exclude missing dates, dates older than 30 days, future dates, explicit expired/inactive postings, recognized broad search pages and unsafe links. Direct application links marked by the provider are preferred. Dates and active state are **provider-reported**, not independently verified at the employer. A reachable page would not prove applications remain open. The app does not scrape job boards or fetch arbitrary application URLs server-side.
 
-Each identified requirement counts equally. The result is not an official ATS score, a hiring decision, or a prediction of a company's screening outcome. The analysis displays the requirements and resume evidence used.
+Up to three role queries x three locations = **at most nine provider requests**, one first page per query; no hidden pagination/retries. Deduplicated results are sorted newest first, then capped at ten. This is the newest subset retrieved, not a guarantee of the newest ten jobs worldwide. Fewer results are displayed honestly. Remote searches request provider-reported remote roles in the configured country; country/time-zone restrictions still require review.
 
-## Gemini free-tier privacy
+Descriptions under 200 or over 30,000 characters, or visibly truncated with trailing ellipsis, are not scored. This heuristic cannot prove completeness. Retrieved descriptions are shown to Gemini for comparison; missing data or failed analysis produces an availability message, never invented listings/scores. Provider coverage and response compatibility must be confirmed with a live key.
 
-Google's terms for unpaid Gemini API services say not to submit sensitive, confidential, or personal information. Free-tier prompts and responses may be used to improve Google products, and human reviewers may process them. For this version, use only synthetic or anonymized resume content. The app asks for confirmation and links to [Google's Gemini API terms](https://ai.google.dev/gemini-api/terms).
+## Update an existing Windows installation
 
-## Run locally on Windows
+Stop the app with Ctrl+C. From PowerShell in your existing project folder:
 
-Use Python 3.10 or newer. Create and activate a virtual environment, then install dependencies:
+```powershell
+git status
+git fetch origin
+git switch resume_analyzer
+git pull --ff-only origin resume_analyzer
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+notepad .env
+```
+
+Preserve local changes and your existing `.env`. If Git reports a conflict or refuses to switch, resolve it before continuing; do not discard user work. Add these lines to your existing `.env` (keep the working Gemini model/key and database URL):
+
+```text
+JOB_SEARCH_API_KEY=YOUR_OPENWEB_NINJA_KEY
+JOB_SEARCH_COUNTRY=in
+SECRET_KEY=YOUR_PRIVATE_RANDOM_SESSION_KEY
+```
+
+Get a direct JSearch key from the provider's developer portal. Select a plan yourself; the app does not purchase anything. Do not share keys in chat or commit `.env`. Generate a random session key locally, for example:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Copy that value into SECRET_KEY. If omitted, the app generates a key at startup and sessions reset on restart. Start:
+
+```powershell
+.\.venv\Scripts\python.exe run.py
+```
+
+Open http://127.0.0.1:5000. Use the new job-discovery form, review the suggested roles, then search. Analyses begin automatically after listings load; individual buttons show cached outcomes. One profile extraction + up to ten job analyses means **up to eleven Gemini requests** per workflow. Quota failures affect individual cards. To retry a cached failed analysis after resolving configuration, start a new workflow.
+
+## First-time setup
+
+Use Python 3.10+ (3.12 recommended):
 
 ```powershell
 py -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env
+notepad .env
 ```
 
-Edit the local `.env` file and set:
-
-- `GEMINI_API_KEY`: your key from Google AI Studio.
-- `GEMINI_MODEL`: defaults to `gemini-2.5-flash-lite`; change it only to a model available to your AI Studio project.
-- `DATABASE_URL`: your MySQL connection string.
-
-Example format (replace every placeholder):
+Set GEMINI_API_KEY, a GEMINI_MODEL available to your key, DATABASE_URL and the job-provider settings above. Do not overwrite an existing `.env`. Create your MySQL database in Workbench first; Workbench is a client and the MySQL server must run. Connection format:
 
 ```text
-DATABASE_URL=mysql+pymysql://<username>:<password>@localhost:3306/<database>?charset=utf8mb4
+DATABASE_URL=mysql+pymysql://USERNAME:URL_ENCODED_PASSWORD@127.0.0.1:3306/DATABASE?charset=utf8mb4
 ```
 
-Create the database in MySQL Workbench first and use its name in `DATABASE_URL`. If your password contains URL-reserved characters, URL-encode it in the connection string. Do not share your Gemini key or database password in chat or commit the `.env` file.
+The existing analysis_records table is reused, so no destructive migration is needed. Missing tables are created automatically; the database itself must exist. MySQL preflight precedes Gemini calls. Passwords with reserved characters must be URL encoded. Keep the Gemini model that already works locally; model availability is not guaranteed by a fallback value.
 
-Start Flask:
+## Data and privacy
+
+Use synthetic/anonymized resumes under [unpaid Gemini data-use terms](https://ai.google.dev/gemini-api/terms). The app requires confirmation and does not automatically anonymize PDFs. Remove identifiers and sensitive/confidential data yourself.
+
+MySQL persists extracted resume text and generated results. Job-discovery results include the extracted profile, job source metadata and analysis evidence, not the raw job description or PDF. Records have no automatic expiry or deletion screen. A description's quoted requirements may appear within generated analysis evidence. No job applications are submitted.
+
+Private workflow state (resume, descriptions and outcomes) lives only in a bounded, server-side memory store: 20 workflows, 30-minute TTL, browser ownership and CSRF checks. Expired state is inaccessible and pruned on access. Resume text is never placed in the session cookie. Restart/eviction loses transient workflows; MySQL records remain. This is a **single-process local demo**, not a durable multi-worker queue. Public deployment requires a shared private state backend, authentication, quotas and retention policy; it is not implemented here.
+
+## Validation
 
 ```powershell
-python run.py
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Open http://127.0.0.1:5000. The `/health` route returns a small application health response.
+Tests cover scoring, provider parsing/errors, date/expiration filters, URL checks, duplicate removal, evidence rejection, missing descriptions, private ownership/CSRF, cached analysis, database error handling and the profile-to-dashboard/manual flows. Provider and Gemini are mocked; production MySQL is not exercised. Confirm all three live services locally before presenting. A mock test suite is not proof of live job coverage.
 
-## Run tests
+## Repository and reusable skill
 
-```powershell
-python -m pytest
-```
-
-## Stored data
-
-The MySQL table stores the extracted resume text and generated result JSON, including the requirement evidence used for the score. The original PDF and job description are not stored. Records remain in MySQL until manually removed; this version has no in-app deletion or automatic expiration.
-
-## Known limits
-
-- The app needs a running MySQL server, an existing database, and valid local connection settings before it will call Gemini.
-- The app needs a working Gemini API key and available model quota.
-- Free-tier data rules restrict the app to synthetic or anonymized resume content.
-- Password-protected PDFs, scanned-image PDFs, and PDFs with no extractable text are not analyzed.
+Repository: Priyadhanalakota61/ai_resume_analyser. Upgrade work lives on `resume_analyzer`. Review the upgrade before merging into main. `skills/build-resume-analyzer/SKILL.md` records the reusable implementation contract; the corresponding ChatGPT skill is saved separately in the Skills workspace.

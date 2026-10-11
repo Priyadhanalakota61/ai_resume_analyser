@@ -4,7 +4,7 @@
 
 Develop the Resume Analyzer on the `resume_analyzer` branch of this repository.
 
-The product accepts a resume PDF and job description, then provides an ATS-style job-match estimate, relevant interview questions, and skill-based suggestions. The user confirmed Flask, MySQL, and the Gemini API.
+The product accepts a resume PDF and up to three preferred locations for sourced job discovery, then shows up to ten recent postings with links, evidence-based job-match estimates, strengths/gaps and interview practice. Preserve the manual resume + job description comparison. The user confirmed Flask, MySQL, and the Gemini API.
 
 Treat the repository and explicit user decisions as requirements. Do not invent additional product behavior, data-retention rules, deployment targets, or credentials. If a necessary decision is not established, pause and ask. Keep confirmed decisions and clearly labeled project methods in `docs/decisions.md`; never describe a project method as an industry-wide standard.
 
@@ -33,8 +33,8 @@ Treat the repository and explicit user decisions as requirements. Do not invent 
 1. Read repository instructions and README before coding. Inspect the current files and report the actual project state.
 2. Implement only confirmed requirements. Ask before resolving material product decisions that are not specified.
 3. Use Flask, MySQL, and Gemini as the agreed stack. Keep provider calls in a small service module so integration details are isolated.
-4. Accept the confirmed inputs: PDF resume and job description. Validate the PDF and handle unreadable/empty text, unsupported files, missing API credentials, Gemini quota/errors, and database connection failures with clear messages.
-5. Generate only the confirmed outputs: ATS-style job-match estimate, relevant interview questions, and skill-based suggestions. Do not add extra user-facing analysis features unless requested.
+4. Accept PDF resume and up to three locations for job discovery, or a manual job description. Validate the PDF and handle unreadable/empty text, unsupported files, missing API credentials, Gemini quota/errors, and database connection failures with clear messages.
+5. Generate the confirmed job-discovery outputs and preserve the manual results. Do not add extra user-facing analysis features unless requested.
 6. Use the project scoring method documented in `docs/decisions.md`. Label the result as an estimate, show the requirement evidence/status behind it, and state that it is not an official ATS score or a hiring decision.
 7. Do not fabricate model output when Gemini fails. Clearly distinguish unavailable analysis from successful analysis.
 8. Add focused tests for meaningful behavior, especially PDF validation/extraction boundaries, scoring, API response parsing, and MySQL persistence.
@@ -43,11 +43,11 @@ Treat the repository and explicit user decisions as requirements. Do not invent 
 
 ## Confirmed scope and decisions
 
-- Repository: `Priyadhanalakota61/resume_analyzer`.
+- Repository: `Priyadhanalakota61/ai_resume_analyser`.
 - Product branch: `resume_analyzer`.
 - Agreed stack: Flask, MySQL, Gemini API.
-- Inputs: resume PDF and job description.
-- Outputs: ATS-style job-match estimate, relevant interview questions, and skill-based suggestions.
+- Inputs: resume PDF and up to three locations, or the preserved manual job-description flow.
+- Outputs: up to ten sourced recent job listings, job-match estimates, evidence, strengths/gaps and interview practice; preserve manual comparison.
 - MySQL should store extracted resume text and generated analysis results. Do not store source PDFs unless the user decides to.
 - The user has MySQL Workbench installed; this does not confirm that a local MySQL server is running or configured.
 - The user may have a Gemini free-tier API key; key presence and quota are not confirmed.

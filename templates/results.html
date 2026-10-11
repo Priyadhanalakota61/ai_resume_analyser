@@ -41,6 +41,7 @@
         {% for item in result.requirements %}
           <div class="requirement">
             <strong>{{ item.requirement }}</strong>
+            <p class="muted">Posting evidence: {{ item.job_evidence }}</p>
             {% if item.status == 'matched' %}
               <p class="status matched">Supporting evidence found</p>
               <p>{{ item.resume_evidence }}</p>

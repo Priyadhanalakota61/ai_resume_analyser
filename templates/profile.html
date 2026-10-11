@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}Review role searches · ResumeMatch{% endblock %}{% block content %}
+<p class="eyebrow">STEP 2 / REVIEW YOUR SEARCH</p><h1>Your experience, your direction.</h1>
+<p class="muted">These role titles are suggestions based on resume excerpts. Review or edit them before searching.</p>
+<section class="card"><h2>Skills supported by your resume</h2><div class="chips">{% for skill in item.profile.skills %}<details><summary>{{ skill.label }}</summary><p>{{ skill.resume_evidence }}</p></details>{% else %}<p>No skills identified.</p>{% endfor %}</div></section>
+<form method="post" action="{{ url_for('jobs.search', token=token) }}" class="card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<h2>Role searches</h2>{% for role in item.profile.suggested_roles %}<label for="role{{ loop.index }}">Role {{ loop.index }}</label><input id="role{{ loop.index }}" name="roles" value="{{ role.label }}" maxlength="100"><p class="muted">Supporting resume excerpt: {{ role.resume_evidence }}</p>{% endfor %}
+<h2>Up to three locations</h2>{% for i in range(3) %}<label for="location{{ i }}">Location {{ i+1 }}{% if i %} (optional){% endif %}</label><input id="location{{ i }}" name="locations" maxlength="100" value="{{ item.locations[i] if i < item.locations|length else '' }}" {% if not i %}required{% endif %}>{% endfor %}
+<p class="muted">Search country: configured by JOB_SEARCH_COUNTRY (default India). Remote means provider-reported remote jobs in that country; check each posting's eligibility restrictions.</p>
+<button type="submit">Find recent jobs &amp; compare my fit</button><p class="muted">Searches the last 30 days; up to 9 provider calls. No applications are submitted. Your private workflow expires after 30 minutes or app restart.</p></form>{% endblock %}

@@ -38,3 +38,15 @@ This is the project's defined matching method, not an official ATS score, a univ
 Google's terms for unpaid Gemini API services say not to submit sensitive, confidential, or personal information. Free-tier prompts and responses may be used to improve Google products, and human reviewers may process them. The app must therefore require the user to confirm that the uploaded resume is synthetic or anonymized before sending extracted text to Gemini. That confirmation does not make it acceptable to submit personal information.
 
 Official terms: https://ai.google.dev/gemini-api/terms
+
+## 2026-10-11: User-authorized job discovery upgrade
+
+- Repository renamed to Priyadhanalakota61/ai_resume_analyser; continue on resume_analyzer. The prior version is merged into main; this upgrade is not automatically merged.
+- New input: selectable-text resume PDF and one to three preferred locations, with Remote supported. User requested up to ten recent jobs, links, fit estimates, strengths/gaps and per-role interview practice.
+- Keep the existing manual comparison available. Add profile evidence and editable role suggestions before search.
+- Implementation choice: direct OpenWeb Ninja JSearch search-v2, country default in, last-month search, bounded first-page retrieval. Adzuna was considered but its documented search descriptions are snippets. No provider subscription/key or live access has been provisioned or verified.
+- Sort source-dated retrieved subset; exclude explicit expired/inactive jobs, deduplicate and cap at ten across locations. Do not promise all jobs worldwide or independently confirmed employer openness.
+- Reuse the equal-weight estimate with exact job/resume excerpt checks. No score if requirements/description are insufficient. Model reasoning is still advisory.
+- Save each completed job comparison in the existing analysis_records generated_result JSON with profile/source metadata. Do not store raw job descriptions or PDF; quoted evidence belongs to generated results.
+- In-process transient workflow state expires after 30 minutes (pruned on access), bounded at 20, with browser ownership/CSRF. Sequential per-job HTTP requests reuse outcomes in that workflow. This is not durable multi-worker hosting.
+- Keep working Gemini env override. Up to nine provider and eleven Gemini calls per completed workflow; no fabricated fallback results or automatic unlimited retries.
