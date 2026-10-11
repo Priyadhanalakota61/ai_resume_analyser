@@ -66,3 +66,6 @@ User requested filtering jobs by resume experience rather than analysing clearly
 
 ### Strict experience filtering correction
 A screenshot showed a four-year frontend requirement passing as unknown for a twelve-month candidate. Extend explicit duration extraction to handle intervening domain words (for example, hands-on frontend engineering). Change discovery to exclude unrecognised experience requirements before analysis rather than displaying uncertain fits. Accept explicit no-experience-required or freshers-welcome statements as zero only when no larger mandatory parsed requirement exists. Fewer than ten results is preferable to filling the list with unclear experience matches. No live coverage or complete semantic parsing is claimed.
+
+### Safe structured-response diagnostics
+A live eligible posting returned the generic unexpected-format message. The exact invalid field is not established. Include the full local validation contract in the prompt while retaining the simple wire schema. Expose only allowlisted validation paths and Pydantic error codes, never raw outputs, input values, contexts or credentials, so the next failing response identifies its constraint without weakening evidence validation. No live success is claimed for this change until the user retries.

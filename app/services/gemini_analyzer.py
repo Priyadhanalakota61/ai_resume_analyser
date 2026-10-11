@@ -1,4 +1,5 @@
 import os
+import json
 from typing import Literal
 from google import genai
 from pydantic import BaseModel, Field, ValidationError
@@ -60,6 +61,8 @@ def generate_structured(prompt, schema):
     model = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash-lite').strip()
     if not model:
         raise GeminiConfigurationError('Set GEMINI_MODEL to the model working with your API key.')
+    validation_contract = json.dumps(schema.model_json_schema(), separators=(',', ':'))
+    prompt += '\nReturn only JSON conforming to this validation contract, including all length and item limits:\n' + validation_contract
     try:
         with genai.Client(api_key=key, http_options={'timeout': 45000}) as client:
             response = client.models.generate_content(model=model, contents=prompt,
@@ -69,8 +72,19 @@ def generate_structured(prompt, schema):
         return schema.model_validate_json(response.text)
     except GeminiAnalysisError:
         raise
-    except (ValidationError, ValueError) as exc:
-        raise GeminiAnalysisError('Gemini returned an unexpected response format.') from exc
+    except ValidationError as exc:
+        # Never display Pydantic input values, context or raw provider responses.
+        details = []
+        allowed = {'requirements', 'requirement', 'status', 'resume_evidence',
+            'job_evidence', 'skills_found', 'skills_missing', 'suggestions',
+            'interview_questions', 'skills', 'suggested_roles', 'label', 'discarded_entries'}
+        for error in exc.errors(include_input=False, include_context=False, include_url=False)[:5]:
+            location = '.'.join(str(part) if isinstance(part, int) or part in allowed else 'field'
+                for part in error['loc']) or 'response'
+            details.append(f"{location}: {error['type']}")
+        raise GeminiAnalysisError('Gemini returned an unexpected response format. Validation: ' + '; '.join(details)) from exc
+    except ValueError as exc:
+        raise GeminiAnalysisError('Gemini returned an unexpected response format. JSON/schema processing failed.') from exc
     except Exception as exc:
         raise GeminiAnalysisError('Gemini analysis unavailable. Check model access, quota and connection.') from exc
 

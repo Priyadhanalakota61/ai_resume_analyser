@@ -29,10 +29,13 @@ def test_generate_uses_simple_schema_but_validates_original(monkeypatch):
     assert analyzer.generate_structured('Synthetic prompt', analyzer.AnalysisInsights).requirements == []
     config = client.models.generate_content.call_args.kwargs['config']
     assert config['response_schema'] == analyzer.provider_schema(analyzer.AnalysisInsights)
+    assert 'maxItems' in client.models.generate_content.call_args.kwargs['contents']
     data['interview_questions'] = ['Synthetic question'] * 9
     client.models.generate_content.return_value.text = json.dumps(data)
-    with pytest.raises(analyzer.GeminiAnalysisError, match='unexpected response format'):
+    with pytest.raises(analyzer.GeminiAnalysisError, match='interview_questions: too_long') as captured:
         analyzer.generate_structured('Synthetic prompt', analyzer.AnalysisInsights)
+    assert 'Synthetic question' not in str(captured.value)
+    assert 'synthetic-key' not in str(captured.value)
 
 
 def test_requirement_bounds_remain_enforced():
